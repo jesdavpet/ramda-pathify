@@ -2,71 +2,76 @@
 function pathify (pathStrings /* all other arguments ignored */) {
   const pathString = Array.isArray(pathStrings) ? pathStrings[0] : pathStrings
 
-  const alpha = /[a-zA-Z]/
+  const alpha = /^[a-zA-Z]$/
   const numeric = /^\-?[0-9]+$/
-  const dot = /\./
-  const quote = /\'|\"|\`/
-  const openBracket = /\[/
-  const closeBracket = /\]/
+  const dot = /^\.$/
+  const quote = /^\'|\"|\`$/
+  const openBracket = /^\[$/
+  const closeBracket = /^\]$/
   const tokens = []
   const paths = []
 
   let bracketMode = false
   let quoteMode = false
   let start = 0
-
+  
   for (let c = 0; c < pathString.length; c++) {
     const character = pathString.charAt(c)
+    const buffer = pathString.slice(start, c)
+    const [peek] = tokens.slice(-1)
 
-    if (c === 0 && !alpha.test(character)) {
+    // Throw when first character is invalid.
+    if (c === 0 && (!alpha.test(character) && !openBracket.test(character))) {
       throw new Error(`Must start with an alpha character!`)
     }
 
-    if (dot.test(character) && !bracketMode && !quoteMode) {
-      if (pathString.slice(start, c)) paths.push(pathString.slice(start, c))
+    // Push dot into token stack when not inside of quotes.
+    if (dot.test(character) && !quoteMode) {
+      if (buffer) paths.push(buffer)
       start = c + 1
     }
 
+    // Push open bracket into token stack when not inside of quotes.
     if (openBracket.test(character) && !quoteMode) {
-      if (tokens[tokens.length -1] === `[`) throw new Error(`Square brackets may not be nested!`)
+      if (peek === `[`) throw new Error(`Square brackets may not be nested!`)
+      // When the buffer up to the open bracket is occupied, push it.
+      if (buffer) paths.push(buffer)
       bracketMode = true
       tokens.push(`[`)
-      if (pathString.slice(start, c)) paths.push(pathString.slice(start, c))
       start = c + 1
     }
 
-    if (
-      closeBracket.test(character) &&
-      tokens[tokens.length -1] === `[` &&
-      bracketMode &&
-      !quoteMode
-    ) {
+    // Push close bracket into token stack when matches opener, and not in quotes. 
+    if (closeBracket.test(character) && peek === `[` && bracketMode && !quoteMode) {
       bracketMode = false
       tokens.pop()
-      const bracketed = pathString.slice(start, c)
-
-      if (bracketed) paths.push(numeric.test(bracketed) ? parseInt(bracketed) : bracketed)
+      // Numeric values must be treated differently for array indexing.
+      const bracketed = numeric.test(buffer) ? parseInt(buffer) : buffer 
+      if (bracketed !== ``) paths.push(bracketed)
       start = c + 1
     }
 
+    // Push quotes based on whether or not the stack peek matches quote type.
     if (quote.test(character)) {
       if (!bracketMode) throw new Error(`Quotes are only allowed in brackets!`)
-      if (tokens[tokens.length -1] !== character && !quoteMode) {
+      // Flag quote mode on when stack peek isn't a matching quote.
+      if (peek !== character && !quoteMode) {
         quoteMode = true
         tokens.push(character)
-      } else if (tokens[tokens.length -1] === character && quoteMode) {
+      }
+      // Flag quote mode off when stack peek is a matching quote.
+      if (peek === character && quoteMode) {
         quoteMode = false
         tokens.pop()
-        paths.push(pathString.slice(start+1, c))
+        paths.push(pathString.slice(start + 1, c))
         start = c + 1
       }
     }
   }
+  // Collect remaining characters after the final delimiter (dot).
+  if (start < pathString.length - 1) paths.push(pathString.slice(start))
 
-  if (start < pathString.length) {
-    paths.push(pathString.slice(start))
-  }
-
+  // Bracket mode or quote mode flag being left on indicates an unmatched token.
   if (bracketMode) throw new Error(`Unmatched square bracket!`)
   if (quoteMode) throw new Error(`Unmatched quote!`)
 

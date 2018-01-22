@@ -4,7 +4,8 @@ const pathify = require(`../src/index`)
 describe(`Tag pathify\`...\``, () => {
 /* Positive test cases ********************************************************/
   it(`should result in an empty array with an empty tag literal`, () => {
-    expect(pathify``).to.deep.equal([])
+    const result = pathify``
+    expect(result).to.deep.equal([])
   })
 
   it(`should retain a single path without dots or brackets.`,  () => {
@@ -15,6 +16,16 @@ describe(`Tag pathify\`...\``, () => {
   it(`should split path on dot notation`,  () => {
     const result = pathify`cats.paws`
     expect(result).to.deep.equal([`cats`, `paws`])
+  })
+
+  it(`should accept redundant bracket notation (numeric)`, () => {
+    const result = pathify`[0]`
+    expect(result).to.deep.equal([0])
+  })
+
+  it(`should accept redundant bracket notation (string)`, () => {
+    const result = pathify`['cats']`
+    expect(result).to.deep.equal([`cats`])
   })
 
   it(`should split path on bracket notation (string)`,  () => {
@@ -73,18 +84,18 @@ describe(`Tag pathify\`...\``, () => {
   })
 
 /* Negative test cases ********************************************************/
-  it(`should throw an error if first character is not alpha`,  () => {
+  it(`should throw when first character is neither alpha nor open bracket`,  () => {
     const numeric = () => { pathify`0` }
     expect(numeric).to.throw()
 
     const quote = () => { pathify`'` }
     expect(quote).to.throw()
 
-    const openBracket = () => { pathify`[0]` }
-    expect(openBracket).to.throw()
+    const dot = () => { pathify`.` }
+    expect(dot).to.throw()
   })
 
-  it(`should throw an error if a quote is found outside a bracket`,  () => {
+  it(`should throw when a quote is found outside a bracket`,  () => {
     const singleQuote = () => { pathify`cat's` }
     expect(singleQuote).to.throw()
 
@@ -95,7 +106,7 @@ describe(`Tag pathify\`...\``, () => {
     expect(backTick).to.throw()
   })
 
-  it(`should throw an error if a quote is never terminated`,  () => {
+  it(`should throw when a bracketed quote is never terminated`,  () => {
     const singleQuote = () => { pathify`cats['paw's']` }
     expect(singleQuote).to.throw()
 
@@ -106,7 +117,7 @@ describe(`Tag pathify\`...\``, () => {
     expect(backTick).to.throw()
   })
 
-  it(`should throw an error if an open square bracket is never terminated`,  () => {
+  it(`should throw when an open square bracket is never terminated`,  () => {
     const missingClose = () => { pathify`cats['paws'` }
     expect(missingClose).to.throw()
 
