@@ -2,7 +2,7 @@ const { expect } = require(`chai`)
 const pathify = require(`../src/index`)
 
 describe(`Tag pathify\`...\``, () => {
-/* Positive test cases ********************************************************/
+  /* Positive test cases */
   it(`should result in an empty array with an empty tag literal`, () => {
     const result = pathify``
     expect(result).to.deep.equal([])
@@ -83,7 +83,7 @@ describe(`Tag pathify\`...\``, () => {
     expect(result).to.deep.equal([`weird`, `"stuff].goes? [in-+/here!".]`])
   })
 
-/* Negative test cases ********************************************************/
+  /* Exception test cases */
   it(`should throw when first character is neither alpha nor open bracket`,  () => {
     const numeric = () => { pathify`0` }
     expect(numeric).to.throw()
@@ -128,3 +128,16 @@ describe(`Tag pathify\`...\``, () => {
     expect(missingOpen).to.throw()
   })
 })
+
+describe(`Function pathify(\`...\`)`, () => {
+  it(`should return the same result as the tag`, () => {
+    const tagResult = pathify`cats.paws[0].look.like['mittens'].for['kittens']`
+    const functionResult = pathify(`cats.paws[0].look.like['mittens'].for['kittens']`)
+    const expectedResult = [`cats`, `paws`, 0, `look`, `like`, `mittens`, `for`, `kittens`]
+    expect(functionResult).to.deep.equal(expectedResult)
+    expect(tagResult).to.deep.equal(functionResult)
+  })
+})
+
+
+

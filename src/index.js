@@ -1,5 +1,6 @@
 /** @param {String} pathStrings @returns {Array<String>} */
 function pathify (pathStrings /* all other arguments ignored */) {
+  // Recast argument to support both tag and function calls.
   const pathString = Array.isArray(pathStrings) ? pathStrings[0] : pathStrings
 
   const alpha = /^[a-zA-Z]$/
@@ -72,8 +73,8 @@ function pathify (pathStrings /* all other arguments ignored */) {
   if (start < pathString.length - 1) paths.push(pathString.slice(start))
 
   // Bracket mode or quote mode flag being left on indicates an unmatched token.
-  if (bracketMode) throw new Error(`Unmatched square bracket!`)
   if (quoteMode) throw new Error(`Unmatched quote!`)
+  if (bracketMode) throw new Error(`Unmatched square bracket!`)
 
   return paths
 }
