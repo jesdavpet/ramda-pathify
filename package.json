@@ -4,7 +4,7 @@
   "description": "Simplifies creating path arrays for functions in the Ramda.js library, using ES6 tagged template literal syntax.",
   "main": "dist/index",
   "scripts": {
-    "build": "rimraf -f dist && mkdir dist && uglifyjs ./src/wtf.js -o ./dist/wtf.min.js -c -m",
+    "build": "minify ./src/index.js --out-file ./lib/ramda-pathify.min.js",
     "test": "npm run test:coverage",
     "test:once": "mocha **/**.test.js",
     "test:watch": "mocha -w **/**.test.js",
@@ -26,10 +26,10 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "babel-minify": "^0.3.0",
     "chai": "^4.1.2",
     "istanbul": "^0.4.5",
-    "mocha": "^4.1.0",
-    "uglifyjs": "^3.3.4"
+    "mocha": "^4.1.0"
   },
   "homepage": "https://github.com/jesdavpet/ramda-pathify-tag#readme"
 }
