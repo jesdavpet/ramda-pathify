@@ -1,10 +1,10 @@
 {
-  "name": "@jesdavpet/ramda-pathify-tag",
+  "name": "ramda-pathify",
   "version": "0.0.1",
-  "description": "Simplifies creating path arrays for functions in the Ramda.js library, using ES6 tagged template literal syntax.",
-  "main": "dist/index",
+  "description": "Simplifies creating path arrays for functions in the Ramda.js library.",
+  "main": "lib/ramda-pathify.min.js",
   "scripts": {
-    "build": "minify ./src/index.js --out-file ./lib/ramda-pathify.min.js",
+    "build": "rimraf -rf ./lib && mkdir ./lib && minify ./src/index.js --out-file ./lib/ramda-pathify.min.js",
     "test": "npm run test:coverage",
     "test:once": "mocha **/**.test.js",
     "test:watch": "mocha -w **/**.test.js",
@@ -29,7 +29,8 @@
     "babel-minify": "^0.3.0",
     "chai": "^4.1.2",
     "istanbul": "^0.4.5",
-    "mocha": "^4.1.0"
+    "mocha": "^4.1.0",
+    "rimraf": "^2.6.2"
   },
   "homepage": "https://github.com/jesdavpet/ramda-pathify-tag#readme"
 }
