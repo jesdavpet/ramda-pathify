@@ -1,21 +1,35 @@
 /** Helper factory function which creates regex matching predicates.
     @param {Regexp} regexFromula
-    @returns {Boolean} */
+    @returns {Boolean}
+    @private */
 const isA = regexFormula => (regexFormula).test.bind(regexFormula)
 
-// Character matching predicates:
+/** @private */
 const isAlpha = isA(/^[a-zA-Z]$/)
-const isNumeric = isA(/^\-?[0-9]+$/)
+
+/** @private */
+const isNumeric = isA(/^\-?[0-9]+$/) // NOTE: Negatives treated as in Ramda.
+
+/** @private */
 const isDot = isA(/^\.$/)
+
+/** @private */
 const isQuote = isA(/^\'|\"|\`$/)
+
+/** @private */
 const isOpenBracket = isA(/^\[$/)
+
+/** @private */
 const isCloseBracket = isA(/^\]$/)
 
+/** @private */
 const isLegalFirstCharacter = char => isAlpha(char) || isOpenBracket(char)
 
 /** Creates a path array (for consumption by Ramda) based on a path string.
     @param {String} pathStrings
-    @returns {Array<String>} */
+    @returns {Array<String>}
+    @throws
+    @public */
 function pathify (pathStrings) {
   // Recast argument to support both tag and function calls.
   const pathString = Array.isArray(pathStrings)
@@ -29,70 +43,67 @@ function pathify (pathStrings) {
     throw new Error(`Must start with an alpha character or "["!`)
   }
 
-  // Accumulate paths by iterating over path string and keeping non-token characters.
-  const tokens = []
-  const paths = []
+  // Accumulate paths by iterating path string, omitting tokens.
+  const tokenStack = []
+  const pathFragments = []
 
   let isBracketModeActive = false
   let isQuoteModeActive = false
-  let start = 0
+
+  let cursor = 0
 
   for (let c = 0; c < pathString.length; c++) {
     const character = pathString.charAt(c)
-    const buffer = pathString.slice(start, c)
-    const [peek] = tokens.slice(-1)
+    const buffer = pathString.slice(cursor, c)
+    const [peek] = tokenStack.slice(-1)
 
-    // Push dot into token stack when not inside of quotes.
+    // Character: .
     if (isDot(character) && !isQuoteModeActive) {
-      if (buffer) paths.push(buffer)
-      start = c + 1
+      // Push dot into token stack when not inside of quotes.
+      if (buffer) pathFragments.push(buffer)
+      cursor = c + 1
     }
 
-    // Push open bracket into token stack when not inside of quotes.
+    // Character: [
     if (isOpenBracket(character) && !isQuoteModeActive) {
-      if (isOpenBracket(peek)) throw new Error(`Square brackets may not be nested!`)
+      if (isOpenBracket(peek)) throw new Error(`No nested square brackets!`)
 
       // When the buffer up to the open bracket is occupied, push it.
-      if (buffer) paths.push(buffer)
+      if (buffer) pathFragments.push(buffer)
       isBracketModeActive = true
-      tokens.push(`[`)
-      start = c + 1
+      tokenStack.push(`[`)
+      cursor = c + 1
     }
 
-    // Pop close bracket "]" from token stack when matches opener, and not in quotes.
-    if (
-      isCloseBracket(character)
-        && isOpenBracket(peek)
-        && isBracketModeActive
-        && !isQuoteModeActive
-    ) {
+    // Character: ]
+    if (isCloseBracket(character) && isOpenBracket(peek)) {
       isBracketModeActive = false
-      tokens.pop()
+      tokenStack.pop()
 
       // Numeric values must be treated differently for array indexing.
       const bracketed = isNumeric(buffer) ? parseInt(buffer) : buffer
-      if (bracketed !== ``) paths.push(bracketed)
-      start = c + 1
+      if (bracketed !== ``) pathFragments.push(bracketed)
+      cursor = c + 1 // Skip cursor over closing bracket.
     }
 
-    // Push quotes based on whether or not the stack peek matches quote type.
+    // Characters: " OR ` OR '
     if (isQuote(character)) {
-      if (!isBracketModeActive) {
-        throw new Error(`Quotes are only allowed in brackets!`)
-      }
+      if (!isBracketModeActive) throw new Error(`Quotes must be in brackets!`)
+
+      const isMatchingQuote = peek === character
 
       // Flag quote mode on when stack peek isn't a matching quote.
-      if (peek !== character && !isQuoteModeActive) {
+      if (!isMatchingQuote && !isQuoteModeActive) {
         isQuoteModeActive = true
-        tokens.push(character)
+        tokenStack.push(character)
       }
 
       // Flag quote mode off when stack peek is a matching quote.
-      if (peek === character && isQuoteModeActive) {
+      if (isMatchingQuote && isQuoteModeActive) {
         isQuoteModeActive = false
-        tokens.pop()
-        paths.push(pathString.slice(start + 1, c))
-        start = c + 1
+        tokenStack.pop()
+        pathFragments.push(pathString.slice(cursor + 1, c))
+        cursor = c + 1 // Skip cursor over closing quote.
       }
     }
   }
@@ -102,8 +113,10 @@ function pathify (pathStrings) {
   if (isBracketModeActive) throw new Error(`Unmatched square bracket!`)
 
   // Collect remaining characters after the final delimiter (dot).
-  if (start < pathString.length - 1) paths.push(pathString.slice(start))
-  return paths
+  if (cursor < pathString.length - 1) {
+    pathFragments.push(pathString.slice(cursor))
+  }
+  return pathFragments
 }
 
 module.exports = pathify
