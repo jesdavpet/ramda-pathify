@@ -1,82 +1,122 @@
-/** @param {String} pathStrings @returns {Array<String>} */
-function pathify (pathStrings /* all other arguments ignored */) {
+/** Helper factory function which creates regex matching predicates.
+    @param {Regexp} regexFromula
+    @returns {Boolean}
+    @private */
+const isA = regexFormula => (regexFormula).test.bind(regexFormula)
+
+/** @private */
+const isAlpha = isA(/^[a-zA-Z]$/)
+
+/** @private */
+const isNumeric = isA(/^\-?[0-9]+$/) // NOTE: Negatives treated as in Ramda.
+
+/** @private */
+const isDot = isA(/^\.$/)
+
+/** @private */
+const isQuote = isA(/^\'|\"|\`$/)
+
+/** @private */
+const isOpenBracket = isA(/^\[$/)
+
+/** @private */
+const isCloseBracket = isA(/^\]$/)
+
+/** @private */
+const isLegalFirstCharacter = char => isAlpha(char) || isOpenBracket(char)
+
+/** Creates a path array (for consumption by Ramda) based on a path string.
+    @param {String} pathStrings
+    @returns {Array<String>}
+    @throws
+    @public */
+function pathify (pathStrings) {
   // Recast argument to support both tag and function calls.
-  const pathString = Array.isArray(pathStrings) ? pathStrings[0] : pathStrings
+  const pathString = Array.isArray(pathStrings)
+        ? `${pathStrings[0]}`
+        : `${pathStrings}`
 
-  const alpha = /^[a-zA-Z]$/
-  const numeric = /^\-?[0-9]+$/
-  const dot = /^\.$/
-  const quote = /^\'|\"|\`$/
-  const openBracket = /^\[$/
-  const closeBracket = /^\]$/
-  const tokens = []
-  const paths = []
+  // Check pre-conditions:
+  const firstCharacter = pathString.charAt(0)
+  if (!firstCharacter) return []
+  if (!isLegalFirstCharacter(firstCharacter)) {
+    throw new Error(`Must start with an alpha character or "["!`)
+  }
 
-  let bracketMode = false
-  let quoteMode = false
-  let start = 0
-  
+  // Accumulate paths by iterating path string, omitting tokens.
+  const tokenStack = []
+  const pathFragments = []
+
+  let isBracketModeActive = false
+  let isQuoteModeActive = false
+
+  let cursor = 0
+
   for (let c = 0; c < pathString.length; c++) {
     const character = pathString.charAt(c)
-    const buffer = pathString.slice(start, c)
-    const [peek] = tokens.slice(-1)
+    const buffer = pathString.slice(cursor, c)
+    const [peek] = tokenStack.slice(-1)
 
-    // Throw when first character is invalid.
-    if (c === 0 && (!alpha.test(character) && !openBracket.test(character))) {
-      throw new Error(`Must start with an alpha character!`)
+    // Character: .
+    if (isDot(character) && !isQuoteModeActive) {
+      // Push dot into token stack when not inside of quotes.
+      if (buffer) pathFragments.push(buffer)
+      cursor = c + 1
     }
 
-    // Push dot into token stack when not inside of quotes.
-    if (dot.test(character) && !quoteMode) {
-      if (buffer) paths.push(buffer)
-      start = c + 1
-    }
+    // Character: [
+    if (isOpenBracket(character) && !isQuoteModeActive) {
+      if (isOpenBracket(peek)) throw new Error(`No nested square brackets!`)
 
-    // Push open bracket into token stack when not inside of quotes.
-    if (openBracket.test(character) && !quoteMode) {
-      if (peek === `[`) throw new Error(`Square brackets may not be nested!`)
       // When the buffer up to the open bracket is occupied, push it.
-      if (buffer) paths.push(buffer)
-      bracketMode = true
-      tokens.push(`[`)
-      start = c + 1
+      if (buffer) pathFragments.push(buffer)
+      isBracketModeActive = true
+      tokenStack.push(`[`)
+      cursor = c + 1
     }
 
-    // Push close bracket into token stack when matches opener, and not in quotes. 
-    if (closeBracket.test(character) && peek === `[` && bracketMode && !quoteMode) {
-      bracketMode = false
-      tokens.pop()
+    // Character: ]
+    if (isCloseBracket(character) && isOpenBracket(peek)) {
+      isBracketModeActive = false
+      tokenStack.pop()
+
       // Numeric values must be treated differently for array indexing.
-      const bracketed = numeric.test(buffer) ? parseInt(buffer) : buffer 
-      if (bracketed !== ``) paths.push(bracketed)
-      start = c + 1
+      const bracketed = isNumeric(buffer) ? parseInt(buffer) : buffer
+      if (bracketed !== ``) pathFragments.push(bracketed)
+      cursor = c + 1 // Skip cursor over closing bracket.
     }
 
-    // Push quotes based on whether or not the stack peek matches quote type.
-    if (quote.test(character)) {
-      if (!bracketMode) throw new Error(`Quotes are only allowed in brackets!`)
+    // Characters: " OR ` OR '
+    if (isQuote(character)) {
+      if (!isBracketModeActive) throw new Error(`Quotes must be in brackets!`)
+
+      const isMatchingQuote = peek === character
+
       // Flag quote mode on when stack peek isn't a matching quote.
-      if (peek !== character && !quoteMode) {
-        quoteMode = true
-        tokens.push(character)
+      if (!isMatchingQuote && !isQuoteModeActive) {
+        isQuoteModeActive = true
+        tokenStack.push(character)
       }
+
       // Flag quote mode off when stack peek is a matching quote.
-      if (peek === character && quoteMode) {
-        quoteMode = false
-        tokens.pop()
-        paths.push(pathString.slice(start + 1, c))
-        start = c + 1
+      if (isMatchingQuote && isQuoteModeActive) {
+        isQuoteModeActive = false
+        tokenStack.pop()
+        pathFragments.push(pathString.slice(cursor + 1, c))
+        cursor = c + 1 // Skip cursor over closing quote.
       }
     }
   }
+
+  // Check post-conditions:
+  if (isQuoteModeActive) throw new Error(`Unmatched quote!`)
+  if (isBracketModeActive) throw new Error(`Unmatched square bracket!`)
+
   // Collect remaining characters after the final delimiter (dot).
-  if (start < pathString.length - 1) paths.push(pathString.slice(start))
-
-  // Bracket mode or quote mode flag being left on indicates an unmatched token.
-  if (quoteMode) throw new Error(`Unmatched quote!`)
-  if (bracketMode) throw new Error(`Unmatched square bracket!`)
-
-  return paths
+  if (cursor < pathString.length - 1) {
+    pathFragments.push(pathString.slice(cursor))
+  }
+  return pathFragments
 }
 
 module.exports = pathify
