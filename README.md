@@ -77,6 +77,6 @@ Useful when refactoring code that has unsafe references to deeply nested propert
 ```diff
 - const unsafe = (band) => band.too.legit[0].tooLegit['to-quit']
 - unsafe(vanillaIce) // --> Error! Cannot reference property "legit" of undefined.
-+ const safe = pathOr(\`N/A\`, pathify\`too.legit[0].tooLegit['to-quit']\`)
++ const safe = pathOr(`N/A`, pathify`too.legit[0].tooLegit['to-quit']`)
 + safe(vanillaIce)  // --> 'N/A'
 ```
