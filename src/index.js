@@ -25,20 +25,32 @@ const isCloseBracket = isA(/^\]$/)
 /** @private */
 const isLegalFirstCharacter = char => isAlpha(char) || isOpenBracket(char)
 
+/** @private */
+const interposeExpressionsIntoPathStrings = (pathStrings, value, i) =>
+      [ ...pathStrings.slice(0, i), `${pathStrings[i]}${value}`, ...pathStrings.slice(i+1) ]
+
 /** Creates a path array (for consumption by Ramda) based on a path string.
     @param {String} pathStrings
     @returns {Array<String>}
     @throws
     @public */
-function pathify (pathStrings) {
+function pathify (pathStrings, ...templateExpressions) {
+  const hasArrayPathStrings = Array.isArray(pathStrings)
+  const hasTemplateExpressions = hasArrayPathStrings && templateExpressions.hasOwnProperty(0)
+
   // Recast argument to support both tag and function calls.
-  const pathString = Array.isArray(pathStrings)
-        ? `${pathStrings[0]}`
-        : `${pathStrings}`
+  const pathString = hasTemplateExpressions
+        ? templateExpressions.reduce(interposeExpressionsIntoPathStrings, pathStrings).join('')
+        : hasArrayPathStrings
+        ? pathStrings[0]
+        : pathStrings
 
   // Check pre-conditions:
   const firstCharacter = pathString.charAt(0)
-  if (!firstCharacter) return []
+  if (!firstCharacter) {
+    return []
+  }
+
   if (!isLegalFirstCharacter(firstCharacter)) {
     throw new Error(`Must start with an alpha character or "["!`)
   }
@@ -55,7 +67,7 @@ function pathify (pathStrings) {
   for (let c = 0; c < pathString.length; c++) {
     const character = pathString.charAt(c)
     const buffer = pathString.slice(cursor, c)
-    const [peek] = tokenStack.slice(-1)
+    const [ peek ] = tokenStack.slice(-1)
 
     // Character: .
     if (isDot(character) && !isQuoteModeActive) {
@@ -116,6 +128,7 @@ function pathify (pathStrings) {
   if (cursor < pathString.length - 1) {
     pathFragments.push(pathString.slice(cursor))
   }
+
   return pathFragments
 }
 

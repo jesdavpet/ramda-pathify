@@ -139,5 +139,46 @@ describe(`Function pathify(\`...\`)`, () => {
   })
 })
 
+describe(`Expressions in tagged template string syntax spathify\`...\``, () => {
+  it(`should return path evaluated with template string expressions`, () => {
+    const location = 'Where'
+    const whom = 'Weirdie'
+    const tagResult = pathify`['${location}'].the.beans['at'].${whom}['?']`
+    const expectedResult = [`Where`, `the`, `beans`, `at`, `Weirdie`, `?`]
+    expect(tagResult).to.deep.equal(expectedResult)
+  })
 
+  it(`should return path evaluated with template numeric expressions`, () => {
+    const number = 4
+    const tagResult = pathify`the.fantastic[${number}]`
+    const expectedResult = [`the`, `fantastic`, 4]
+    expect(tagResult).to.deep.equal(expectedResult)
+  })
+
+  it(`should return path evaluated with string value of undefined`, () => {
+    const nil = undefined
+    const tagResult = pathify`not.defined.is['${nil}']`
+    const expectedResult = [`not`, `defined`, `is`, `undefined`]
+    expect(tagResult).to.deep.equal(expectedResult)
+  })
+
+  it(`should return path evaluated with string value of null`, () => {
+    const nil = null
+    const tagResult = pathify`nil.sounds.like['${nil}']`
+    const expectedResult = [`nil`, `sounds`, `like`, `null`]
+    expect(tagResult).to.deep.equal(expectedResult)
+  })
+
+  it(`should return path evaluated with string value of boolean`, () => {
+    const bool = (4 > 1 && false !== true)
+    const tagResult = pathify`alternatively['${bool}']`
+    const expectedResult = [`alternatively`, `true`]
+    expect(tagResult).to.deep.equal(expectedResult)
+  })
+
+  it(`should return path evaluated with empty string when provided`, () => {
+    const tagResult = pathify`empty.expression['${''}']`
+    expect(tagResult).to.deep.equal(['empty', 'expression', ''])
+  })
+})
 
