@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/jesdavpet/ramda-pathify.svg?style=svg)](https://circleci.com/gh/jesdavpet/ramda-pathify)
+
 ramda-pathify
 =============
 
