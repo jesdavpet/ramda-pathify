@@ -18,24 +18,24 @@
   "bugs": {
     "url": "https://github.com/jesdavpet/ramda-pathify-tag/issues"
   },
-  "dependencies": {},
+  "dependencies": {
+    "istanbul": "^0.4.5"
+  },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.8.4",
     "@babel/preset-env": "^7.8.4",
     "babel-preset-minify": "^0.5.1",
-    "chai": "^4.1.2",
-    "istanbul": "^0.4.5",
-    "mocha": "^4.1.0",
+    "jest": "^25.1.0",
     "rimraf": "^2.6.2"
   },
   "scripts": {
     "build": "rimraf -rf ./lib && mkdir ./lib && babel src -d lib",
     "prepublish": "npm run build",
     "test": "npm run test:coverage",
-    "test:once": "mocha **/**.test.js",
-    "test:watch": "mocha -w **/**.test.js",
-    "test:coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha **/**.test.js"
+    "test:once": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "npx istanbul cover jest"
   },
   "babel": {
     "presets": [
