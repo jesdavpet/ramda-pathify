@@ -17,7 +17,7 @@ jobs:
       name: codecov/default
     steps: 
       - codecov/upload:
-          file: {{ coverage/lcov.info }}
+          file: coverage/lcov.info
 workflows:
     build-and-test:
       jobs:
