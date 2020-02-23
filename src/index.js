@@ -26,8 +26,10 @@ const isCloseBracket = isA(/^\]$/)
 const isLegalFirstCharacter = char => isAlpha(char) || isOpenBracket(char)
 
 /** @private */
-const interposeExpressionsIntoPathStrings = (pathStrings, value, i) =>
-      [ ...pathStrings.slice(0, i), `${pathStrings[i]}${value}`, ...pathStrings.slice(i+1) ]
+const interposeExpressionsIntoPathStrings = (pathStrings, value, i) => pathStrings
+      .slice(0, i)
+      .concat([`${pathStrings[i]}${value}`])
+      .concat(pathStrings.slice(i+1))
 
 /** Creates a path array (for consumption by Ramda) based on a path string.
     @param {String} pathStrings
@@ -67,7 +69,8 @@ function pathify (pathStrings, ...templateExpressions) {
   for (let c = 0; c < pathString.length; c++) {
     const character = pathString.charAt(c)
     const buffer = pathString.slice(cursor, c)
-    const [ peek ] = tokenStack.slice(-1)
+    const head = tokenStack.slice(-1)
+    const peek = head[0]
 
     // Character: .
     if (isDot(character) && !isQuoteModeActive) {
