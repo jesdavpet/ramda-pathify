@@ -1,5 +1,8 @@
 [![CircleCI](https://circleci.com/gh/jesdavpet/ramda-pathify.svg?style=svg)](https://circleci.com/gh/jesdavpet/ramda-pathify)
 
+[![codecov](https://codecov.io/gh/jesdavpet/ramda-pathify/branch/master/graph/badge.svg)](https://codecov.io/gh/jesdavpet/ramda-pathify)
+
+
 ramda-pathify
 =============
 
