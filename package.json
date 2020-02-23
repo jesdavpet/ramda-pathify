@@ -18,9 +18,7 @@
   "bugs": {
     "url": "https://github.com/jesdavpet/ramda-pathify-tag/issues"
   },
-  "dependencies": {
-    "istanbul": "^0.4.5"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.8.4",
@@ -35,7 +33,7 @@
     "test": "npm run test:coverage",
     "test:once": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "npx istanbul cover jest"
+    "test:coverage": "jest --coverage"
   },
   "babel": {
     "presets": [
