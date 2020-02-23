@@ -37,8 +37,8 @@
     "test:once": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "coverage": "coverage:codecov",
-    "coverage:codecov": "npx codecov"
+    "coverage": "npm run coverage:codecov",
+    "coverage:codecov": "codecov"
   },
   "babel": {
     "presets": [
