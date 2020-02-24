@@ -1,6 +1,6 @@
 {
   "name": "ramda-pathify",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Simplifies creating path arrays for functions in the Ramda.js library.",
   "keywords": [
     "ramda",
