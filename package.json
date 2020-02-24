@@ -18,14 +18,13 @@
   "bugs": {
     "url": "https://github.com/jesdavpet/ramda-pathify-tag/issues"
   },
-  "dependencies": {
-    "codecov": "^3.6.5"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.8.4",
     "@babel/preset-env": "^7.8.4",
     "babel-preset-minify": "^0.5.1",
+    "codecov": "^3.6.5",
     "jest": "^25.1.0",
     "jest-coverage-badges": "^1.1.2",
     "rimraf": "^2.6.2"
